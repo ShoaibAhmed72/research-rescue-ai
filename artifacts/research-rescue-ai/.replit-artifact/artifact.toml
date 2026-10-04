@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Research Rescue AI"
+description = "A student research assistant that plans academic questions, finds verifiable scholarly sources, compares evidence, and creates exportable reports with transparent citations and saved research history."
+version = "1.0.0"
+id = "artifacts/research-rescue-ai"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23496
+
+[services.development]
+run = "pnpm --filter @workspace/research-rescue-ai run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/research-rescue-ai", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/research-rescue-ai/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23496"
+BASE_PATH = "/"
