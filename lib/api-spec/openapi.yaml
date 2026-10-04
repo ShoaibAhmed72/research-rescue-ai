@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: research
+    description: Research discovery and provider availability
 paths:
   /healthz:
     get:
@@ -24,6 +26,48 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /research/status:
+    get:
+      operationId: getResearchServiceStatus
+      tags: [research]
+      summary: Get research provider availability
+      responses:
+        "200":
+          description: Current availability of research providers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResearchServiceStatus"
+  /research/search:
+    post:
+      operationId: findResearchSources
+      tags: [research]
+      summary: Search scholarly indexes for research sources
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResearchSearchInput"
+      responses:
+        "200":
+          description: Scholarly sources found for the question
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResearchSearchResponse"
+        "400":
+          description: Invalid research question or source limit
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "502":
+          description: All scholarly search providers were unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +77,87 @@ components:
           type: string
       required:
         - status
+    ApiError:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+    ResearchServiceStatus:
+      type: object
+      properties:
+        aiAvailable:
+          type: boolean
+        aiProvider:
+          type: string
+        searchAvailable:
+          type: boolean
+        searchProvider:
+          type: string
+      required: [aiAvailable, aiProvider, searchAvailable, searchProvider]
+    ResearchSearchInput:
+      type: object
+      properties:
+        question:
+          type: string
+          minLength: 3
+          maxLength: 500
+        limit:
+          type: integer
+          minimum: 5
+          maximum: 15
+      required: [question, limit]
+    ResearchSource:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        organization:
+          type: string
+        url:
+          type: string
+          format: uri
+        author:
+          type: ["string", "null"]
+        publishedDate:
+          type: ["string", "null"]
+        abstract:
+          type: ["string", "null"]
+        sourceType:
+          type: string
+        doi:
+          type: ["string", "null"]
+        credibility:
+          type: string
+          enum: [high, medium]
+      required:
+        - id
+        - title
+        - organization
+        - url
+        - author
+        - publishedDate
+        - abstract
+        - sourceType
+        - doi
+        - credibility
+    ResearchSearchResponse:
+      type: object
+      properties:
+        sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResearchSource"
+        providers:
+          type: array
+          items:
+            type: string
+        searchedAt:
+          type: string
+          format: date-time
+        warning:
+          type: ["string", "null"]
+      required: [sources, providers, searchedAt, warning]
 
